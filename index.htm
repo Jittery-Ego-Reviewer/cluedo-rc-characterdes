@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神探：尋找神秘人</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        detective: {
+                            dark: '#0f172a',
+                            panel: '#1e293b',
+                            gold: '#fbbf24',
+                            text: '#f8fafc'
+                        }
+                    },
+                    keyframes: {
+                        shake: {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '25%': { transform: 'translateX(-10px)' },
+                            '75%': { transform: 'translateX(10px)' }
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' }
+                        },
+                        bounceSlow: {
+                            '0%, 100%': { transform: 'translateY(-5%)' },
+                            '50%': { transform: 'translateY(0)' }
+                        }
+                    },
+                    animation: {
+                        shake: 'shake 0.3s ease-in-out',
+                        pop: 'pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        bounceSlow: 'bounceSlow 3s infinite ease-in-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 遊戲資料 (9個情境) ---
+        const gameScenarios = [
+            {
+                id: 1,
+                text: "「今日教育局派咗個長官微服出巡，嚟我哋學校做突擊檢查！工友叔叔話頭先見到個陌生人喺走廊行嚟行去抄筆記。大家快啲憑特徵認出佢，等大家有心理準備！」",
+                targetText: "戴住黑色眼鏡嘅男人",
+                target: { type: 'man', shirt: '#8d99ae', pants: '#2b2d42', accessory: 'black_glasses' },
+                distractors: [
+                    { type: 'man', shirt: '#8d99ae', pants: '#2b2d42', accessory: 'none' },
+                    { type: 'man', shirt: '#8d99ae', pants: '#2b2d42', accessory: 'blue_hat' }
+                ]
+            },
+            {
+                id: 2,
+                text: "「聽講有個百萬訂閱嘅搞笑 YouTuber，今日嚟咗我哋學校附近拍『隱藏挑戰』！為咗唔俾粉絲認出，佢特登打扮到好低調。我哋一定要做第一個認出佢嘅人！」",
+                targetText: "戴住藍色帽嘅哥哥",
+                target: { type: 'boy', shirt: '#ffb703', pants: '#023047', accessory: 'blue_hat' },
+                distractors: [
+                    { type: 'boy', shirt: '#ffb703', pants: '#023047', accessory: 'none' },
+                    { type: 'boy', shirt: '#ffb703', pants: '#023047', accessory: 'black_glasses' }
+                ]
+            },
+            {
+                id: 3,
+                text: "「圖書館最新買嗰套《鬼滅之刃》漫畫，被人一次過借晒返去，仲要過期一個月都唔還！圖書館主任話個借書人好面生，似係家長或者代課老師。大家幫手搵佢出嚟催佢還書！」",
+                targetText: "著住綠色衫嘅老師",
+                target: { type: 'woman', shirt: '#2a9d8f', pants: '#264653', accessory: 'none' },
+                distractors: [
+                    { type: 'woman', shirt: '#e76f51', pants: '#264653', accessory: 'none' },
+                    { type: 'woman', shirt: '#0077b6', pants: '#264653', accessory: 'none' }
+                ]
+            },
+            {
+                id: 4,
+                text: "「儲物室入面幾十個籃球同排球被人跌晒落地下，亂到七彩！有同學話見到個大人匆匆忙忙走咗出嚟，會唔會係新嚟嘅教練？快啲搵佢返嚟執手尾！」",
+                targetText: "攞住籃球嘅叔叔",
+                target: { type: 'man', shirt: '#e63946', pants: '#1d3557', accessory: 'basketball' },
+                distractors: [
+                    { type: 'man', shirt: '#e63946', pants: '#1d3557', accessory: 'none' },
+                    { type: 'man', shirt: '#e63946', pants: '#1d3557', accessory: 'yellow_scarf' }
+                ]
+            },
+            {
+                id: 5,
+                text: "「今朝返到班房，發現每張枱上面都放咗一盒貴價朱古力！工友話，今朝早天未光，有個家長神神秘秘咁搬咗箱嘢入嚟。到底係邊個同學嘅屋企人咁好人？」",
+                targetText: "戴住黃色頸巾嘅姨姨",
+                target: { type: 'woman', shirt: '#9c6644', pants: '#ede0d4', accessory: 'yellow_scarf' },
+                distractors: [
+                    { type: 'woman', shirt: '#9c6644', pants: '#ede0d4', accessory: 'none' },
+                    { type: 'woman', shirt: '#9c6644', pants: '#ede0d4', accessory: 'black_glasses' }
+                ]
+            },
+            {
+                id: 6,
+                text: "「尋日落大雨，有位老師放喺門口遮架把最靚嘅名牌遮，被人大懵拎錯咗，換咗把穿窿嘅爛遮！當時有幾個街坊同訪客避雨，到底係邊個拎錯咗？」",
+                targetText: "攞住紅色遮嘅婆婆",
+                target: { type: 'woman', shirt: '#a8dadc', pants: '#457b9d', accessory: 'red_umbrella' },
+                distractors: [
+                    { type: 'woman', shirt: '#a8dadc', pants: '#457b9d', accessory: 'none' },
+                    { type: 'woman', shirt: '#a8dadc', pants: '#457b9d', accessory: 'dog' }
+                ]
+            },
+            {
+                id: 7,
+                text: "「喺超級市場有個三歲小朋友喊到拆天，話同媽咪失散咗！佢喊到講嘢一嚿嚿，淨係講得出媽咪身上嘅特徵。大家快啲幫手做個好心人搵佢出嚟！」",
+                targetText: "著住紫色衫嘅媽媽",
+                target: { type: 'woman', shirt: '#9d4edd', pants: '#10002b', accessory: 'none' },
+                distractors: [
+                    { type: 'woman', shirt: '#ff006e', pants: '#10002b', accessory: 'none' },
+                    { type: 'woman', shirt: '#3a0ca3', pants: '#10002b', accessory: 'none' }
+                ]
+            },
+            {
+                id: 8,
+                text: "「尋晚打風，屋苑有隻金毛尋回犬走失咗。今朝有個街坊喺公園執到佢，交咗俾管理處就走咗。主人好想親自多謝佢，我哋要靠保安叔叔嘅口供搵返呢個好心人！」",
+                targetText: "拖住狗仔嘅伯伯",
+                target: { type: 'man', shirt: '#52796f', pants: '#2f3e46', accessory: 'dog' },
+                distractors: [
+                    { type: 'man', shirt: '#52796f', pants: '#2f3e46', accessory: 'none' },
+                    { type: 'man', shirt: '#52796f', pants: '#2f3e46', accessory: 'red_umbrella' }
+                ]
+            },
+            {
+                id: 9,
+                text: "「樓下公園張長櫈尋日啱啱翻新完，明明貼住『油漆未乾』，但CCTV見到有人照坐落去！嗰個人行開嗰陣，條褲後面一定印咗一大笪綠色油漆。到底係邊個街坊咁唔小心？」",
+                targetText: "褲上面有綠色油漆嘅哥哥",
+                target: { type: 'boy', shirt: '#f4a261', pants: '#e76f51', accessory: 'green_paint' },
+                distractors: [
+                    { type: 'boy', shirt: '#f4a261', pants: '#e76f51', accessory: 'none' },
+                    { type: 'boy', shirt: '#f4a261', pants: '#e76f51', accessory: 'basketball' }
+                ]
+            }
+        ];
+
+        // --- 音效工具 (Web Audio API) ---
+        let audioCtx = null;
+        const playSound = (type) => {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                // 開心的叮叮聲
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                // 沉低的嘟嘟聲
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(130, audioCtx.currentTime + 0.15);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'start') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
+        };
+
+        // --- 主應用程式 ---
+        const App = () => {
+            const [gameState, setGameState] = useState('START'); // START, BRIEFING, END
+            const [playedIds, setPlayedIds] = useState([]);
+            const [currentCase, setCurrentCase] = useState(null);
+
+            // 初始化或進入下一個隨機案件
+            const startNextCase = () => {
+                playSound('start');
+                const availableScenarios = gameScenarios.filter(s => !playedIds.includes(s.id));
+                
+                if (availableScenarios.length === 0) {
+                    setGameState('END');
+                    playSound('correct'); // 播放勝利音效
+                    return;
+                }
+
+                // 隨機選一個案件
+                const randomCase = availableScenarios[Math.floor(Math.random() * availableScenarios.length)];
+                
+                setCurrentCase(randomCase);
+                setGameState('BRIEFING');
+            };
+
+            // 處理返回按鈕
+            const handleReturnClick = () => {
+                playSound('start');
+                setPlayedIds(prev => {
+                    const newPlayedIds = [...prev, currentCase.id];
+                    if (newPlayedIds.length >= gameScenarios.length) {
+                        setGameState('END');
+                        playSound('correct');
+                    } else {
+                        setGameState('START'); // 返回放大鏡主頁
+                    }
+                    return newPlayedIds;
+                });
+            };
+
+            // 組件：開始畫面
+            if (gameState === 'START') {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                        <h1 className="text-4xl md:text-6xl font-black mb-8 text-detective-gold tracking-wider drop-shadow-md">
+                            校園神探<br/><span className="text-3xl md:text-5xl text-white">尋找神秘人</span>
+                        </h1>
+                        
+                        <div className="bg-detective-panel p-8 rounded-3xl shadow-2xl border-4 border-detective-gold max-w-md w-full animate-pop">
+                            <p className="text-xl mb-6 leading-relaxed">
+                                今日發生咗好多奇怪事！<br/>我哋需要你嘅觀察力，<br/>根據線索搵出神秘人！
+                            </p>
+                            
+                            <button 
+                                onClick={startNextCase}
+                                className="group relative inline-flex items-center justify-center cursor-pointer"
+                            >
+                                <div className="absolute inset-0 bg-detective-gold rounded-full opacity-50 group-hover:opacity-100 blur-lg transition duration-300"></div>
+                                <div className="relative text-8xl md:text-9xl animate-bounceSlow filter drop-shadow-2xl">
+                                    🔍
+                                </div>
+                            </button>
+                            <p className="mt-6 text-lg text-gray-300 font-bold animate-pulse">
+                                👆 撳吓放大鏡開始調查 👆
+                            </p>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 組件：案情簡報與目標畫面 (合併版)
+            if (gameState === 'BRIEFING') {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+                        <div className="w-full max-w-4xl bg-detective-panel rounded-3xl p-6 md:p-10 shadow-2xl border-l-8 border-detective-gold animate-pop flex flex-col items-center">
+                            <div className="w-full flex justify-between items-center mb-6">
+                                <h2 className="text-2xl md:text-3xl font-bold text-detective-gold flex items-center gap-3">
+                                    <span>📁</span> 案件檔案 #{playedIds.length + 1}
+                                </h2>
+                            </div>
+                            
+                            <div className="w-full text-xl md:text-2xl leading-loose text-gray-100 mb-8 bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-inner">
+                                {currentCase.text}
+                            </div>
+                            
+                            <button
+                                onClick={handleReturnClick}
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-2xl md:text-4xl font-black py-5 px-12 rounded-full transition transform hover:scale-105 shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95 animate-pulse"
+                            >
+                                🔍 返回
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // 組件：完結畫面
+            if (gameState === 'END') {
+                return (
+                    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden flex justify-center items-start pt-10">
+                             {/* 簡單的慶祝紙屑效果 (CSS) */}
+                             <div className="text-6xl animate-bounceSlow absolute left-10 top-20">🎊</div>
+                             <div className="text-6xl animate-bounceSlow absolute right-10 top-40" style={{animationDelay: '1s'}}>🎉</div>
+                             <div className="text-6xl animate-bounceSlow absolute left-1/4 top-10" style={{animationDelay: '0.5s'}}>✨</div>
+                             <div className="text-6xl animate-bounceSlow absolute right-1/4 top-20" style={{animationDelay: '1.5s'}}>🌟</div>
+                        </div>
+
+                        <div className="bg-detective-panel p-10 rounded-3xl shadow-2xl border-4 border-detective-gold max-w-2xl w-full animate-pop z-10 relative">
+                            <h1 className="text-5xl md:text-7xl mb-6">🏆</h1>
+                            <h2 className="text-4xl md:text-5xl font-black mb-6 text-detective-gold">任務完成！</h2>
+                            <p className="text-2xl leading-relaxed mb-10 text-white">
+                                恭喜你成功破解晒所有案件！<br/>
+                                你已經成為最強嘅<span className="text-detective-gold font-bold text-3xl mx-2">神探</span>啦！
+                            </p>
+                            
+                            <button 
+                                onClick={() => {
+                                    playSound('start');
+                                    setPlayedIds([]);
+                                    setGameState('START');
+                                }}
+                                className="bg-white hover:bg-gray-200 text-slate-900 text-xl font-bold py-4 px-10 rounded-full transition shadow-lg active:scale-95"
+                            >
+                                🔄 再玩一次
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return null;
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
