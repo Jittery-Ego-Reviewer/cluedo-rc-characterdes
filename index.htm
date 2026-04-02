@@ -74,39 +74,39 @@
         const gameScenarios = [
             {
                 id: 1,
-                text: "「今日教育局派咗個長官微服出巡，嚟我哋學校做突擊檢查！工友叔叔話頭先見到個陌生人喺走廊行嚟行去抄筆記。大家快啲憑特徵認[...]
+                text: "「今日教育局派咗個長官微服出巡，嚟我哋學校做突擊檢查！工友叔叔話頭先見到個陌生人喺走廊行嚟行去抄筆記。大家快啲憑特徵認出佢，等大家有心理準備！」"
             },
             {
                 id: 2,
-                text: "「聽講有個百萬訂閱嘅搞笑 YouTuber，今日嚟咗我哋學校附近拍『隱藏挑戰』！為咗唔俾粉絲認出，佢特登打扮到好低調。我哋一定要做[...]
+                text: "「聽講有個百萬訂閱嘅搞笑 YouTuber，今日嚟咗我哋學校附近拍『隱藏挑戰』！為咗唔俾粉絲認出，佢特登打扮到好低調。我哋一定要做第一個認出佢嘅人！」"
             },
             {
                 id: 3,
-                text: "「圖書館最新買嗰套《鬼滅之刃》漫畫，被人一次過借晒返去，仲要過期一個月都唔還！圖書館主任話個借書人好面生，似係家長或者[...]
+                text: "「圖書館最新買嗰套《鬼滅之刃》漫畫，被人一次過借晒返去，仲要過期一個月都唔還！圖書館主任話個借書人好面生，似係家長或者代課老師。大家幫手搵佢出嚟催佢還書！」"
             },
             {
                 id: 4,
-                text: "「儲物室入面幾十個籃球同排球被人跌晒落地下，亂到七彩！有同學話見到個大人匆匆忙忙走咗出嚟，會唔會係新嚟嘅教練？快啲搵佢[...]
+                text: "「儲物室入面幾十個籃球同排球被人跌晒落地下，亂到七彩！有同學話見到個大人匆匆忙忙走咗出嚟，會唔會係新嚟嘅教練？快啲搵佢返嚟執手尾！」"
             },
             {
                 id: 5,
-                text: "「今朝返到班房，發現每張枱上面都放咗一盒貴價朱古力！工友話，今朝早天未光，有個家長神神秘秘咁搬咗箱嘢入嚟。到底係邊個同[...]
+                text: "「今朝返到班房，發現每張枱上面都放咗一盒貴價朱古力！工友話，今朝早天未光，有個家長神神秘秘咁搬咗箱嘢入嚟。到底係邊個同學嘅屋企人咁好人？」"
             },
             {
                 id: 6,
-                text: "「尋日落大雨，有位老師放喺門口遮架把最靚嘅名牌遮，被人大懵拎錯咗，換咗把穿窿嘅爛遮！當時有幾個街坊同訪客避雨，到底係邊[...]
+                text: "「尋日落大雨，有位老師放喺門口遮架把最靚嘅名牌遮，被人大懵拎錯咗，換咗把穿窿嘅爛遮！當時有幾個街坊同訪客避雨，到底係邊個拎錯咗？」"
             },
             {
                 id: 7,
-                text: "「喺超級市場有個三歲小朋友喊到拆天，話同媽咪失散咗！佢喊到講嘢一嚿嚿，淨係講得出媽咪身上嘅特徵。大家快啲幫手做個好心人[...]
+                text: "「喺超級市場有個三歲小朋友喊到拆天，話同媽咪失散咗！佢喊到講嘢一嚿嚿，淨係講得出媽咪身上嘅特徵。大家快啲幫手做個好心人搵佢出嚟！」"
             },
             {
                 id: 8,
-                text: "「尋晚打風，屋苑有隻金毛尋回犬走失咗。今朝有個街坊喺公園執到佢，交咗俾管理處就走咗。主人好想親自多謝佢，我哋要靠保安叔[...]
+                text: "「尋晚打風，屋苑有隻金毛尋回犬走失咗。今朝有個街坊喺公園執到佢，交咗俾管理處就走咗。主人好想親自多謝佢，我哋要靠保安叔叔嘅口供搵返呢個好心人！」"
             },
             {
                 id: 9,
-                text: "「樓下公園張長櫈尋日啱啱翻新完，明明貼住『油漆未乾』，但CCTV見到有人照坐落去！嗰個人行開嗰陣，條褲後面一定印咗一大笪綠��[...]
+                text: "「樓下公園張長櫈尋日啱啱翻新完，明明貼住『油漆未乾』，但CCTV見到有人照坐落去！嗰個人行開嗰陣，條褲後面一定印咗一大笪綠色油漆。到底係邊個街坊咁唔小心？」"
             }
         ];
 
@@ -159,33 +159,6 @@
             const [playedIds, setPlayedIds] = useState([]);
             const [currentCase, setCurrentCase] = useState(null);
 
-            // New: character manifest + current suspect filename
-            const [characters, setCharacters] = useState([]);
-            const [currentSuspect, setCurrentSuspect] = useState(null);
-
-            // Fetch characters manifest on mount
-            useEffect(() => {
-                // manifest path: relative to site root so it works on GitHub Pages
-                fetch('characters/characters.json')
-                    .then(res => {
-                        if (!res.ok) throw new Error('Characters manifest not found');
-                        return res.json();
-                    })
-                    .then(data => {
-                        // Expect data to be an array of filenames, e.g. ["alice.jpg", "bob.jpg"]
-                        if (Array.isArray(data)) {
-                            setCharacters(data);
-                        } else {
-                            console.warn('characters.json not an array');
-                            setCharacters([]);
-                        }
-                    })
-                    .catch(err => {
-                        console.warn('Could not load characters manifest:', err);
-                        setCharacters([]);
-                    });
-            }, []);
-
             // 初始化或進入下一個隨機案件
             const startNextCase = () => {
                 playSound('start');
@@ -200,14 +173,7 @@
                 // 隨機選一個案件
                 const randomCase = availableScenarios[Math.floor(Math.random() * availableScenarios.length)];
                 
-                // 選一個隨機嫌疑人圖片（如果已載入）
-                let suspectFile = null;
-                if (characters.length > 0) {
-                    suspectFile = characters[Math.floor(Math.random() * characters.length)];
-                }
-
                 setCurrentCase(randomCase);
-                setCurrentSuspect(suspectFile);
                 setGameState('BRIEFING');
             };
 
@@ -267,31 +233,13 @@
                                 </h2>
                             </div>
                             
-                            {/* 左文右圖：在中大型顯示器顯示嫌疑人圖 */}
-                            <div className="w-full flex flex-col md:flex-row gap-6 items-start mb-8">
-                                <div className="flex-1 text-xl md:text-2xl leading-loose text-gray-100 bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-inner">
-                                    {currentCase.text}
-                                </div>
-
-                                {currentSuspect ? (
-                                    <div className="w-full md:w-64 lg:w-80 flex-shrink-0 rounded-xl overflow-hidden bg-slate-900 p-2 border border-slate-700 shadow-lg">
-                                        <img
-                                            src={encodeURI(`characters/${currentSuspect}`)}
-                                            alt="Suspect"
-                                            className="w-full h-64 md:h-80 object-cover rounded-lg"
-                                        />
-                                    </div>
-                                ) : (
-                                    // If no characters are loaded, show a small placeholder box (optional)
-                                    <div className="w-full md:w-64 lg:w-80 flex-shrink-0 rounded-xl overflow-hidden bg-slate-800 p-4 border border-slate-700 text-center text-gray-400">
-                                        <div className="text-sm">尚未載入角色圖片</div>
-                                    </div>
-                                )}
+                            <div className="w-full text-xl md:text-2xl leading-loose text-gray-100 mb-8 bg-slate-800 p-6 md:p-8 rounded-2xl border border-slate-700 shadow-inner">
+                                {currentCase.text}
                             </div>
                             
                             <button
                                 onClick={handleReturnClick}
-                                className="bg-blue-600 hover:bg-blue-500 text-white text-2xl md:text-4xl font-black py-5 px-12 rounded-full transition transform hover:scale-105 shadow-2xl"
+                                className="bg-blue-600 hover:bg-blue-500 text-white text-2xl md:text-4xl font-black py-5 px-12 rounded-full transition transform hover:scale-105 shadow-[0_0_30px_rgba(37,99,235,0.4)] active:scale-95 animate-pulse"
                             >
                                 🔍 返回
                             </button>
